@@ -1,0 +1,142 @@
+page 50,100
+
+INPUT   MACRO
+        MOV     AH,01H
+        INT     21H
+ENDM
+
+MESSAGE MACRO   VAR
+        LEA     DX,VAR
+        MOV     AH,09H
+        INT     21H
+ENDM
+
+
+.MODEL  SMALL
+
+.STACK  100
+
+
+;----------------------------------------------------------------------------
+.DATA
+
+DIG     DB      0H
+TEMP    DB      ?
+N       DB      ?
+
+MSG1     DB      10,13,"NO OF ELEMENTS IN ARRAY:-$"
+
+MSG2     DB      10,13,"ENTER NUMBER:-$"
+
+MSG3     DB      10,13,"ANNWER =$"
+
+ARRAY    DB      20  DUP(0)
+
+;----------------------------------------------------------------------------
+
+
+.CODE
+
+MAIN    PROC    FAR
+
+MOV     AX,@DATA
+MOV     DS,AX
+
+;----------------------------------------------------------------------------
+
+;accept no of elements in array (N)
+
+MESSAGE MSG1
+
+INPUT                       ;INPUT TEN'S PLACE DIGIT     
+
+SUB     AL,30H              ;CONVERT INTO DECIMAL EQUIVALENT NUMBER 35H TO 5H
+MOV     CL,10
+MUL     CL
+MOV     N,AL
+
+
+INPUT                       ;input UNIT'S PLACE digit
+
+SUB     AL,30H
+ADD     N,AL
+
+
+LEA     SI,ARRAY            
+MOV     CL,N              
+;----------------------------------------------------------------------------
+
+
+ACCEPT:
+
+        MESSAGE MSG2
+        
+        INPUT
+
+        MOV     [SI],AL
+        
+        INC     SI
+        DEC     CL
+        JNZ     ACCEPT
+        
+        
+        LEA     SI,ARRAY
+        MOV     CL,N
+;----------------------------------------------------------------------------
+
+ADDITION:
+
+        ;adding array element with dig1
+        
+        MOV     DL,[SI]
+        SUB     DL,30H
+        ADD     DL,DIG
+        
+        ;packed bcd to unpacked bcd conversion using DAA command
+        
+        MOV     AL,DL       ;data must be in AL
+        DAA
+        MOV     DL,AL
+        
+
+        ;storing answer in temperory variable DIG1
+
+        MOV     DIG,DL
+        
+        INC     SI
+        DEC     CL
+        JNZ     ADDITION
+;----------------------------------------------------------------------------
+
+OUTPUT:
+
+        MESSAGE MSG3
+        
+        ;printing right nibble
+        
+        MOV     DL,DIG
+        
+        MOV     CL,04H
+        SHR     DL,CL
+        
+        ADD     DL,30H
+        MOV     AH,02H
+        INT     21H
+        
+        ;printing left nibble
+        
+        MOV     DL,DIG
+        
+        AND     DL,0FH
+        
+        ADD     DL,30H
+        MOV     AH,02H
+        INT     21H
+
+;----------------------------------------------------------------------------
+
+MOV     AX,4C00H
+INT     21H
+
+MAIN    ENDP
+        END     MAIN
